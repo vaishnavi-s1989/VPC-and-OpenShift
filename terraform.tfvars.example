@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Required
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ibmcloud_api_key = "YOUR_IBM_CLOUD_API_KEY"   # set via TF_VAR_ibmcloud_api_key env var
+resource_group_name = "my-resource-group"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Region & Zones
+# ─────────────────────────────────────────────────────────────────────────────
+
+region = "us-south"
+zones  = ["us-south-1", "us-south-2", "us-south-3"]
+prefix = "roks"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Networking
+# ─────────────────────────────────────────────────────────────────────────────
+
+vpc_cidr = "10.0.0.0/8"
+
+# One CIDR per zone, index-aligned with var.zones
+worker_subnet_cidrs        = ["10.10.10.0/24", "10.10.20.0/24", "10.10.30.0/24"]
+control_plane_subnet_cidrs = ["10.20.10.0/24", "10.20.20.0/24", "10.20.30.0/24"]
+lb_subnet_cidrs            = ["10.30.10.0/24", "10.30.20.0/24", "10.30.30.0/24"]
+
+enable_public_gateway = true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OpenShift / ROKS
+# ─────────────────────────────────────────────────────────────────────────────
+
+openshift_version = "4.15_openshift"
+worker_flavor     = "bx2.4x16"
+workers_per_zone  = 2
+
+# Uncomment for private-only cluster
+# disable_public_service_endpoint = true
+
+# Uncomment to enable Portieris image security
+# enable_image_security = true
+
+# Uncomment to use an existing COS instance for the image registry
+# cos_instance_name = "my-cos-instance"
+
+# Uncomment to enable KMS encryption for worker node disks
+# kms_instance_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# kms_key_id      = "crn:v1:bluemix:public:kms:us-south:..."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Load Balancer
+# ─────────────────────────────────────────────────────────────────────────────
+
+lb_app_port        = 443
+enable_private_nlb = true
+
+# Uncomment to attach a TLS certificate to the ALB HTTPS listener
+# tls_certificate_crn = "crn:v1:bluemix:public:secrets-manager:..."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Tags
+# ─────────────────────────────────────────────────────────────────────────────
+
+tags = ["terraform", "vpc", "openshift", "production"]
