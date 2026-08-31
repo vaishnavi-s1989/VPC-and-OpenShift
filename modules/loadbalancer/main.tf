@@ -15,41 +15,37 @@ resource "ibm_is_lb" "public_alb" {
 }
 
 # Backend pool – forwards to OpenShift Router pods on NodePort
+# IBM VPC LB backend pools only support "http" and "tcp"; "https" is listener-only.
 resource "ibm_is_lb_pool" "public_alb_https" {
   name                = "${var.name_prefix}-pub-alb-https-pool"
   lb                  = ibm_is_lb.public_alb.id
   algorithm           = "round_robin"
-  protocol            = "https"
+  protocol            = "http"
   health_delay        = 10
   health_retries      = 3
   health_timeout      = 5
-  health_type         = "https"
+  health_type         = "http"
   health_monitor_url  = "/healthz"
   health_monitor_port = var.app_port
 }
 
-# HTTPS listener
+# HTTPS listener – certificate_instance is required when protocol is "https"
 resource "ibm_is_lb_listener" "public_alb_https" {
-  lb           = ibm_is_lb.public_alb.id
-  port         = 443
-  protocol     = "https"
-  default_pool = ibm_is_lb_pool.public_alb_https.id
-
-  # Supply a certificate CRN from Secrets Manager / Certificate Manager
+  lb                   = ibm_is_lb.public_alb.id
+  port                 = 443
+  protocol             = var.tls_certificate_crn != "" ? "https" : "tcp"
+  default_pool         = ibm_is_lb_pool.public_alb_https.id
   certificate_instance = var.tls_certificate_crn != "" ? var.tls_certificate_crn : null
 }
 
 # HTTP → HTTPS redirect listener
+# Uses top-level redirect attributes (https_redirect block removed — not supported in ibm provider >= 1.67)
 resource "ibm_is_lb_listener" "public_alb_http_redirect" {
-  lb       = ibm_is_lb.public_alb.id
-  port     = 80
-  protocol = "http"
-
-  # Redirect all HTTP to HTTPS
-  https_redirect {
-    http_status_code = 301
-    listener         = ibm_is_lb_listener.public_alb_https.id
-  }
+  lb                            = ibm_is_lb.public_alb.id
+  port                          = 80
+  protocol                      = "http"
+  https_redirect_listener       = ibm_is_lb_listener.public_alb_https.id
+  https_redirect_status_code    = 301
 }
 
 # Pool members – one per worker subnet (attach by subnet, IBM manages instance binding)

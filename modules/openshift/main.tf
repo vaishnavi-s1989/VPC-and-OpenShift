@@ -92,10 +92,11 @@ resource "ibm_container_addons" "main" {
   cluster = ibm_container_vpc_cluster.main.id
 
   dynamic "addons" {
-    for_each = var.cluster_addons
+    # Filter out entries with empty version strings — the IBM provider rejects version = ""
+    for_each = { for a in var.cluster_addons : a.name => a }
     content {
       name    = addons.value.name
-      version = addons.value.version
+      version = addons.value.version != "" ? addons.value.version : null
     }
   }
 }
